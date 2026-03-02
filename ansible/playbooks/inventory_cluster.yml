@@ -1,0 +1,140 @@
+---
+- name: Inventaire capacité machines pour Kubernetes
+  hosts: all
+  gather_facts: true
+  vars:
+    report_dir: "./reports"
+
+  tasks:
+    # ── CPU ────────────────────────────────────────────────────────────────
+    - name: Récupérer le modèle CPU
+      command: lscpu
+      register: lscpu_output
+      changed_when: false
+
+    - name: Parser le modèle CPU
+      set_fact:
+        cpu_model: >-
+          {{ lscpu_output.stdout_lines
+             | select('match', '^Model name.*')
+             | first
+             | regex_replace('^Model name\s*:\s*', '')
+             | trim }}
+
+    # ── STOCKAGE ───────────────────────────────────────────────────────────
+    - name: Lister les disques physiques
+      command: lsblk -d -o NAME,SIZE,TYPE --noheadings
+      register: lsblk_output
+      changed_when: false
+
+    - name: Espace disponible sur les partitions principales
+      shell: df -h --output=source,size,used,avail,pcent,target | grep -vE "^tmpfs|^udev|^Filesystem"
+      register: df_output
+      changed_when: false
+
+    # ── RÉSEAU ─────────────────────────────────────────────────────────────
+    - name: Récupérer les interfaces réseau et IPs
+      command: ip -brief addr
+      register: ip_output
+      changed_when: false
+
+    - name: Récupérer la vitesse des interfaces
+      shell: |
+        for iface in $(ls /sys/class/net/); do
+          speed=$(cat /sys/class/net/$iface/speed 2>/dev/null || echo "N/A")
+          echo "$iface: ${speed} Mbps"
+        done
+      register: net_speed_output
+      changed_when: false
+
+    # ── SYSTÈME ────────────────────────────────────────────────────────────
+    - name: Récupérer la version du kernel
+      command: uname -r
+      register: kernel_output
+      changed_when: false
+
+    - name: Récupérer la version Ubuntu
+      command: lsb_release -ds
+      register: os_output
+      changed_when: false
+
+    # ── RAPPORT PAR MACHINE ────────────────────────────────────────────────
+    - name: Créer le dossier de rapports en local
+      file:
+        path: "{{ report_dir }}"
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: false
+
+    - name: Générer le rapport texte par machine
+      copy:
+        dest: "{{ report_dir }}/{{ inventory_hostname }}.txt"
+        content: |
+          ============================================================
+           RAPPORT CAPACITÉ — {{ inventory_hostname }}
+          ============================================================
+
+          OS       : {{ os_output.stdout }}
+          Kernel   : {{ kernel_output.stdout }}
+
+          ── CPU ──────────────────────────────────────────────────────
+          Modèle   : {{ cpu_model }}
+          Cores    : {{ ansible_processor_vcpus }} vCPU
+                     ({{ ansible_processor_count }} socket(s) ×
+                      {{ ansible_processor_cores }} core(s) ×
+                      {{ ansible_processor_threads_per_core }} thread(s))
+          Archi    : {{ ansible_architecture }}
+
+          ── MÉMOIRE ──────────────────────────────────────────────────
+          RAM totale    : {{ (ansible_memtotal_mb / 1024) | round(1) }} Go
+          RAM disponible: {{ (ansible_memfree_mb / 1024) | round(1) }} Go
+
+          ── DISQUES ──────────────────────────────────────────────────
+          {{ lsblk_output.stdout }}
+
+          ── PARTITIONS ───────────────────────────────────────────────
+          {{ df_output.stdout }}
+
+          ── RÉSEAU ───────────────────────────────────────────────────
+          Interfaces :
+          {{ ip_output.stdout }}
+
+          Vitesses :
+          {{ net_speed_output.stdout }}
+
+          ============================================================
+      delegate_to: localhost
+
+    # ── RAPPORT GLOBAL SYNTHÈSE ────────────────────────────────────────────
+    - name: Générer la ligne de synthèse globale
+      lineinfile:
+        path: "{{ report_dir }}/synthese.txt"
+        line: >-
+          {{ '%-20s' | format(inventory_hostname) }}
+          | CPU: {{ ansible_facts['processor_vcpus'] }} vCPU ({{ cpu_model | truncate(30, True, '...') }})
+          | RAM: {{ (ansible_memtotal_mb / 1024) | round(1) }} Go
+          | Disques: {{ lsblk_output.stdout_lines | select('match', '.* disk$') | list | length }} disque(s)
+        create: true
+      delegate_to: localhost
+
+- name: Finaliser le rapport de synthèse
+  hosts: localhost
+  gather_facts: false
+  vars:
+    report_dir: "./reports"
+  tasks:
+    - name: Afficher la synthèse globale
+      command: cat "{{ report_dir }}/synthese.txt"
+      register: synthese
+      changed_when: false
+
+    - name: Résumé dans le terminal
+      debug:
+        msg: |
+          ╔══════════════════════════════════════════════════════════════╗
+           SYNTHÈSE DU CLUSTER
+          ╠══════════════════════════════════════════════════════════════╣
+          {{ synthese.stdout }}
+          ╚══════════════════════════════════════════════════════════════╝
+          Rapports détaillés disponibles dans : {{ report_dir }}/
