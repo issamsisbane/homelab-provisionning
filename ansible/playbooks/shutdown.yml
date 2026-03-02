@@ -1,0 +1,15 @@
+---
+- name: Éteindre les machines
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Confirmation — lister les machines ciblées
+      debug:
+        msg: "⚠️  Extinction planifiée de : {{ inventory_hostname }}"
+
+    - name: Éteindre la machine
+      community.general.shutdown:
+        delay: 0
+        msg: "Extinction demandée via Ansible"
+      become: true
