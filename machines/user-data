@@ -1,0 +1,46 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: fr_FR.UTF-8
+  keyboard:
+    layout: us
+    variant: intl
+  
+  storage:
+    layout:
+      name: direct
+
+  identity:
+    hostname: ih-node-1 # ih-node-1, ih-node-2, ih-node-3
+    username: kuadm
+    password: encrypted_password
+  
+  ssh:
+    install-server: true
+    authorized-keys:
+      - ssh-ed25519 AAAAmySSHPublicKey
+    allow-pw: false
+
+  packages:
+    - wpasupplicant # For Wifi
+
+  user-data:
+    write_files:
+      - path: /etc/netplan/00-wifi.yaml
+        permissions: '0600'
+        content: |
+          network:
+            version: 2
+            renderer: networkd
+            wifis:
+              wlan0:
+                dhcp4: true
+                optional: true
+                access-points:
+                  "MyRouteur":
+                    password: "mypassword"
+
+  late-commands:
+  - echo "kuadm ALL=(ALL) NOPASSWD:ALL" > /target/etc/sudoers.d/kuadm
+  - curtin in-target -- sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"/' /etc/default/grub
+  - curtin in-target -- update-grub
