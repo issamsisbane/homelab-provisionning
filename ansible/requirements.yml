@@ -1,0 +1,4 @@
+roles:
+  - name: kubespray
+    src: https://github.com/kubernetes-sigs/kubespray
+    version: v2.30.0

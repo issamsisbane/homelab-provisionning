@@ -1,0 +1,32 @@
+services:
+  ansible:
+    dns:
+      - 192.168.1.1 # ton DNS interne (IP de ton routeur ou Pi-hole)
+      - 8.8.8.8 # fallback
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspace:cached
+      # Cache pip pour éviter de re-télécharger à chaque rebuild
+      - ansible-pip-cache:/root/.cache/pip
+      # Cache des collections Ansible
+      - ansible-collections:/root/.ansible
+    command: sleep infinity
+    network_mode: host # Accès direct au réseau local → pratique pour SSH vers tes serveurs
+    environment:
+      - ANSIBLE_HOST_KEY_CHECKING=False
+      - ANSIBLE_RETRY_FILES_ENABLED=False
+      - ANSIBLE_STDOUT_CALLBACK=default # était "yaml"
+      - ANSIBLE_RESULT_FORMAT=yaml # ajoute ça
+    # Décommente si tu préfères un réseau bridge (et enlève network_mode: host)
+    # networks:
+    #   - ansible-net
+
+# networks:
+#   ansible-net:
+#     driver: bridge
+
+volumes:
+  ansible-pip-cache:
+  ansible-collections:
