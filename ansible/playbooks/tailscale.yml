@@ -1,0 +1,10 @@
+---
+- name: Installer Tailscale sur les nœuds Kubernetes
+  hosts: kube_node
+  become: true
+
+  vars_files:
+    - ../vars/tailscale.yml
+
+  roles:
+    - roles/tailscale

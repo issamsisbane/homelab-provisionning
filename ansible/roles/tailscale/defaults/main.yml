@@ -1,0 +1,25 @@
+# Clé d'authentification Tailscale
+# Générer sur https://login.tailscale.com/admin/settings/keys
+# Utiliser une "reusable auth key" pour plusieurs nœuds
+# tailscale_auth_key: ""
+
+# Tags à appliquer au nœud (optionnel, nécessite des ACL Tailscale)
+# tailscale_tags: "tag:k8s-node"
+tailscale_tags: ""
+
+# Accepter les routes annoncées par d'autres nœuds
+tailscale_accept_routes: true
+
+# Accepter le DNS Tailscale (MagicDNS) — important pour résoudre *.ts.net
+tailscale_accept_dns: true
+
+# Annoncer les routes du cluster Kubernetes vers le tailnet (optionnel)
+# Utile pour accéder aux services K8s depuis d'autres machines du tailnet
+tailscale_advertise_routes: ""
+# Exemple : tailscale_advertise_routes: "10.96.0.0/12,10.244.0.0/16"
+
+# Hostname du nœud dans Tailscale (par défaut : hostname de la machine)
+tailscale_hostname: ""
+
+# Version du package (latest par défaut)
+tailscale_version: "latest"
