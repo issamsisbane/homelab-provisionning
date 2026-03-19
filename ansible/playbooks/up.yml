@@ -1,0 +1,20 @@
+---
+- name: Vérifier si les machines sont up
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ping des machines
+      ansible.builtin.ping:
+      register: ping_result
+      ignore_unreachable: true
+      ignore_errors: true
+
+    - name: Résultat — machine accessible
+      debug:
+        msg: "✅ {{ inventory_hostname }} est UP et répond au ping Ansible"
+      when: ping_result is defined and ping_result.ping is defined
+
+    - name: Résultat — machine inaccessible
+      debug:
+        msg: "❌ {{ inventory_hostname }} est DOWN ou inaccessible"
+      when: ping_result is undefined or ping_result.unreachable is defined
