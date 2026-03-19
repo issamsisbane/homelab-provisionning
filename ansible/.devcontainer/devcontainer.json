@@ -3,7 +3,6 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "ansible",
   "workspaceFolder": "/workspace",
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -26,13 +25,12 @@
       }
     }
   },
-
-  "mounts": [
-    // Monte ta clé SSH locale dans le container pour accéder aux serveurs
-    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
-  ],
-
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-
   "remoteUser": "root"
+	"remoteEnv": {
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh/ssh-agent.sock,target=/ssh-agent,type=bind"
+  ]
 }
