@@ -1,4 +1,9 @@
 terraform {
+ 	backend "pg" {
+    conn_str      = var.statefile_postgresql_uri
+    schema_name   = "openbao"
+  }
+
   required_providers {
     vault = {
       source  = "hashicorp/vault"

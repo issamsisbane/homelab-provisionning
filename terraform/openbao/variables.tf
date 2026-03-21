@@ -1,3 +1,8 @@
+variable "statefile_postgresql_uri" {
+  type    = string
+  default  = ""
+}
+
 variable "openbao_address" {
   type    = string
   default = "http://openbao.openbao.svc.cluster.local:8200"
