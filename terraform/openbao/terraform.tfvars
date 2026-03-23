@@ -6,6 +6,7 @@ namespaces = [
   "headlamp",
   "cert-manager",
   "external-dns",
+  "zipline",
 ]
 
 namespaces_with_shared_access = []
