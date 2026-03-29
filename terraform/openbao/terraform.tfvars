@@ -7,6 +7,8 @@ namespaces = [
   "cert-manager",
   "external-dns",
   "zipline",
+  "seaweedfs",
+  "observability",
 ]
 
 namespaces_with_shared_access = []
