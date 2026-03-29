@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+tasks:
+  pf:
+    desc: Create Port Forward for cnpg terraform bdd
+    cmds:
+      - kubectl port-forward -n terraform service/terraform-cnpg-rw 5432:5432
