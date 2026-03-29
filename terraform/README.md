@@ -1,11 +1,13 @@
-# Provisionning - Terraform
+# Terraform
 
-Terraform code for infrastructure.
+OpenTofu modules for infrastructure configuration.
 
-## Prerequises
+## Modules
 
-- Opentofu > v1.11.5
+| Directory | Purpose |
+|-----------|---------|
+| [`openbao/`](openbao/README.md) | Secrets management — KV stores and policies per Kubernetes namespace |
 
-## Usage
+## Prerequisites
 
-- Openbao : Configuration as code for kubernetes workload authentication on openbao
+- OpenTofu >= 1.11.5
