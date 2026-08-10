@@ -115,3 +115,81 @@ resource "vault_kubernetes_auth_backend_role" "namespace" {
   token_ttl     = 3600
   token_max_ttl = 7200
 }
+
+# -------------------------------------------------------
+# OIDC Authelia
+# -------------------------------------------------------
+
+resource "vault_policy" "default_authelia" {
+  name   = "authelia-default"
+  policy = <<-EOT
+    path "secret/data/{{identity.entity.aliases.${vault_jwt_auth_backend.authelia.accessor}.metadata.username}}/*" {
+      capabilities = ["read", "list"]
+    }
+  EOT
+}
+
+resource "vault_jwt_auth_backend" "authelia" {
+  path               = "oidc"
+  type               = "oidc"
+  oidc_discovery_url = var.authelia_issuer_url
+  oidc_client_id     = var.oidc_client_id
+  oidc_client_secret = var.oidc_client_secret
+  default_role       = "authelia"
+
+  tune {
+    default_lease_ttl = "1h"
+    max_lease_ttl      = "24h"
+  }
+}
+
+resource "vault_jwt_auth_backend_role" "authelia" {
+  backend        = vault_jwt_auth_backend.authelia.path
+  role_name      = "authelia"
+  role_type      = "oidc"
+
+  bound_audiences    = [var.oidc_client_id]
+  allowed_redirect_uris = var.oidc_redirect_uris
+
+  user_claim   = "sub"
+  groups_claim = "groups"
+
+  oidc_scopes = ["openid", "profile", "groups", "email"]
+
+  token_policies = [vault_policy.default_authelia.name]
+  token_ttl      = 3600
+  token_max_ttl  = 86400
+}
+
+resource "vault_jwt_auth_backend_role" "authelia_admins" {
+  backend   = vault_jwt_auth_backend.authelia.path
+  role_name = "authelia-admins"
+  role_type = "oidc"
+
+  bound_audiences       = [var.oidc_client_id]
+  allowed_redirect_uris = var.oidc_redirect_uris
+
+  user_claim   = "sub"
+  groups_claim = "groups"
+
+  oidc_scopes = ["profile", "groups", "email"]
+
+  bound_claims_type = "string"
+  bound_claims = {
+    groups = "k8s-admins"
+  }
+
+  token_policies = [vault_policy.admins.name]
+  token_ttl      = 3600
+  token_max_ttl  = 86400
+}
+
+resource "vault_policy" "admins" {
+  name   = "openbao-admins"
+  policy = <<-EOT
+    # Accès total à tous les secrets engines existants et futurs
+    path "*" {
+      capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+    }
+  EOT
+}
