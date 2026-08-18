@@ -6,9 +6,10 @@ Deploys and configures the `ihcluster` Kubernetes cluster using [Kubespray](http
 
 | Node | Control plane | etcd | Worker |
 |------|:---:|:---:|:---:|
-| ih-node-1 | ✓ | ✓ | ✓ |
+| ih-node-1 | | | ✓ |
 | ih-node-2 | | | ✓ |
-| ih-node-3 | | | ✓ |
+| ih-node-3 | ✓ | ✓ | ✓ |
+| ih-node-4 | | | ✓ |
 
 - **CNI**: Calico
 - **Service CIDR**: `10.233.0.0/18`
@@ -27,6 +28,16 @@ ansible-galaxy install -r requirements.yml
 
 ```bash
 ansible-playbook playbooks/kubespray.yml
+```
+
+To scale the cluster (add/remove nodes) or tear it down, Kubespray's own playbooks are exposed as one-liners:
+
+```bash
+# Add nodes present in the inventory but not yet part of the cluster
+ansible-playbook playbooks/scale.yml
+
+# Remove Kubernetes from all nodes (does not touch Tailscale)
+ansible-playbook playbooks/reset.yml
 ```
 
 ### 3. Install Tailscale on all nodes
@@ -60,6 +71,14 @@ ansible-playbook playbooks/inventory_cluster.yml
 ansible-playbook playbooks/shutdown.yml
 ```
 
+#### No lid suspend
+
+The cluster nodes are laptops. By default, closing the lid triggers a suspend/shutdown via `systemd-logind`, which would take a node down. This playbook sets `HandleLidSwitch(Docked/ExternalPower)=ignore` in `/etc/systemd/logind.conf` and masks the `sleep`/`suspend`/`hibernate`/`hybrid-sleep` systemd targets so the node stays up regardless of lid state.
+
+```bash
+ansible-playbook playbooks/no_lid_suspend.yml
+```
+
 ### Development container
 
 A `.devcontainer/` is provided for running Ansible inside Docker (Ubuntu 24.04 with Ansible, ansible-lint, and common collections pre-installed). Open the `ansible/` folder in VS Code and reopen in container.
@@ -73,3 +92,5 @@ A `.devcontainer/` is provided for running Ansible inside Docker (Ubuntu 24.04 w
 **Tailscale as a separate playbook** — Tailscale is not a Kubespray concern. Keeping it as a standalone role and playbook means it can be re-run independently (e.g. to rotate the auth key) without touching the cluster.
 
 **Ansible Vault for secrets** — the Tailscale auth key is the only secret managed in Ansible. It is encrypted with Ansible Vault and committed to the repo, keeping secrets alongside the code that uses them without exposing them in plaintext.
+
+**Lid handling as a separate playbook** — since the nodes are repurposed laptops, `systemd-logind`'s default lid behavior would suspend/shut down a node whenever its lid is closed. This is host-level OS configuration, unrelated to Kubespray or Tailscale, so it lives in its own role/playbook (`no_lid_suspend`) that can be re-applied independently, e.g. after an OS reinstall.
