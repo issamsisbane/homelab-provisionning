@@ -1,0 +1,3 @@
+# Action à effectuer par systemd-logind à la fermeture du capot.
+# "ignore" = ne rien faire (ni suspendre, ni éteindre, ni hiberner)
+no_lid_suspend_action: "ignore"

@@ -3,17 +3,14 @@ set -e
 
 echo "🔧 Configuration post-création du container Ansible..."
 
-# Permissions SSH
 if [ -d /root/.ssh ]; then
     chmod 700 /root/.ssh
     chmod 600 /root/.ssh/* 2>/dev/null || true
     echo "✅ Permissions SSH configurées"
 fi
 
-# Créer le dossier de config Ansible s'il n'existe pas
 mkdir -p /workspace/reports
 
-# Installer Kubespray et toutes ses dépendances (depuis galaxy.yml)
 echo "📦 Installation des collections Ansible..."
 ansible-galaxy collection install -r requirements.yml
 ansible-galaxy collection install \
@@ -25,7 +22,6 @@ ansible-galaxy collection install \
     "community.docker>=3.11.0" \
     "kubernetes.core>=2.4.2"
 
-# Vérifier qu'ansible est bien installé
 echo ""
 echo "📦 Versions installées :"
 ansible --version | head -3

@@ -1,0 +1,7 @@
+---
+- name: Empêcher l'extinction/mise en veille des laptops à la fermeture du capot
+  hosts: kube_node
+  become: true
+
+  roles:
+    - roles/no_lid_suspend

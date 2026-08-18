@@ -1,0 +1,27 @@
+---
+- name: Configurer le comportement du capot (batterie / secteur) dans logind.conf
+  community.general.ini_file:
+    path: /etc/systemd/logind.conf
+    section: Login
+    option: "{{ item }}"
+    value: "{{ no_lid_suspend_action }}"
+    no_extra_spaces: true
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  loop:
+    - HandleLidSwitch
+    - HandleLidSwitchDocked
+    - HandleLidSwitchExternalPower
+  notify: Redémarrer systemd-logind
+
+- name: Empêcher la suspension/hibernation automatique du système
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    masked: true
+  loop:
+    - sleep.target
+    - suspend.target
+    - hibernate.target
+    - hybrid-sleep.target
