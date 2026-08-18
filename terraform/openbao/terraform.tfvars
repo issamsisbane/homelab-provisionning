@@ -9,7 +9,9 @@ namespaces = [
   "tailscale",
   "lldap",
   "authelia",
-  "argocd"
+  "argocd",
+  "microbin",
+  "gatus"
 ]
 
 namespaces_with_shared_access = []
