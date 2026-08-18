@@ -26,8 +26,8 @@
     }
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "remoteUser": "root"
-	"remoteEnv": {
+  "remoteUser": "root",
+  "remoteEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent"
   },
   "mounts": [

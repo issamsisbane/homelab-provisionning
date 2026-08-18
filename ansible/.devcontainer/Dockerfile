@@ -20,27 +20,21 @@ RUN apt-get update && apt-get install -y \
     jq tree less \
     && rm -rf /var/lib/apt/lists/*
 
-# Générer la locale
 RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
 
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# Installer Ansible via pip (version récente)
+# ansible-core 2.17.x needed for Kubespray v2.30.0
 RUN pip3 install --break-system-packages \
-    ansible \
+    "ansible-core>=2.17.3,<2.18.0" \
     ansible-lint \
     netaddr \
     jmespath \
     paramiko
 
-# Installer des collections Ansible utiles
-RUN ansible-galaxy collection install \
-    community.general \
-    ansible.posix
-
-# Autocomplétion Ansible
+# Autocomplete Ansible
 RUN activate-global-python-argcomplete3 || true
 
 WORKDIR /workspace
